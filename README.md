@@ -7,6 +7,7 @@ python -m venv venv
 
 # نصب تمام نیازمندی‌ها
 pip install -r requirements.txt
+uvicorn app.main:app --reload
 
 
 #gitignore content
