@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import policy
 from app.api.routes import policy, assessment
+from app.models.content import Content
 
 app = FastAPI(
     title="Intelligence & Governance Platform API",

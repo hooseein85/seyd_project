@@ -27,7 +27,6 @@ class Assessment(Base):
     influence_score = Column(Numeric, nullable=True)
     frequency_score = Column(Numeric, nullable=True)
     recommendation = Column(Text, nullable=True)
-    content_id = Column(UUID(as_uuid=True), nullable=True)
-
-    # تعریف رابطه برای دریافت خودکار اطلاعات قانون
+    content_id = Column(UUID(as_uuid=True), ForeignKey("core.content.id"), nullable=True)
     policy = relationship("Policy", primaryjoin="Assessment.policy_id == Policy.id")
+    content = relationship("Content", primaryjoin="Assessment.content_id == Content.id")

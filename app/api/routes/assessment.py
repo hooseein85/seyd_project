@@ -12,3 +12,12 @@ def get_assessments(skip: int = 0, limit: int = 100, db: Session = Depends(get_d
     # استفاده از joinedload برای دریافت همزمان اطلاعات policy
     assessments = db.query(Assessment).options(joinedload(Assessment.policy)).offset(skip).limit(limit).all()
     return assessments
+
+@router.get("/", response_model=List[AssessmentResponse])
+def get_assessments(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    # اضافه کردن joinedload دوم برای جدول Content
+    assessments = db.query(Assessment).options(
+        joinedload(Assessment.policy),
+        joinedload(Assessment.content)
+    ).offset(skip).limit(limit).all()
+    return assessments

@@ -10,6 +10,14 @@ class PolicyMinimal(BaseModel):
     class Config:
         from_attributes = True
 
+class ContentMinimal(BaseModel):
+    content_id: Optional[str] = None
+    body: Optional[str] = None
+    platform: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
 class AssessmentBase(BaseModel):
     fingerprint: str
     import_batch_id: Optional[str] = None
@@ -31,6 +39,8 @@ class AssessmentBase(BaseModel):
 class AssessmentResponse(AssessmentBase):
     id: UUID
     policy: Optional[PolicyMinimal] = None # اضافه شدن فیلد قانون به خروجی
+    content: Optional[ContentMinimal] = None # اضافه شدن محتوا
 
     class Config:
         from_attributes = True
+
