@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import policy, assessment
+from app.api.routes import policy, assessment, content
 from app.models.content import Content
+from app.models.telegram_chat import TelegramChat
+from app.models.account import Account
 
 app = FastAPI(
     title="Intelligence & Governance Platform API",
@@ -20,3 +22,4 @@ app.add_middleware(
 
 app.include_router(policy.router)
 app.include_router(assessment.router) # اضافه شدن روتر ارزیابی
+app.include_router(content.router)

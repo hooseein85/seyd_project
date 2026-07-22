@@ -2,6 +2,7 @@ import uuid
 from sqlalchemy import Column, String, Text, Integer, DateTime, ForeignKey, text
 from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from app.db.base import Base
+from sqlalchemy.orm import relationship
 
 class Content(Base):
     __tablename__ = "content"
@@ -23,8 +24,11 @@ class Content(Base):
     fingerprint = Column(Text, nullable=False)
     created_at = Column(DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=True)
     updated_at = Column(DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=True)
-    account_id = Column(UUID(as_uuid=True), nullable=True)
+    account_id = Column(UUID(as_uuid=True), ForeignKey("core.account.id"), nullable=True)
     source_id = Column(UUID(as_uuid=True), nullable=True)
-    chat_id = Column(UUID(as_uuid=True), nullable=True)
+    chat_id = Column(UUID(as_uuid=True), ForeignKey("core.telegram_chat.id"), nullable=True)
     import_batch_id = Column(String(50), nullable=True)
     platform = Column(String, nullable=True)
+    account = relationship("Account", primaryjoin="Content.account_id == Account.id")
+    telegram_chat = relationship("TelegramChat", primaryjoin="Content.chat_id == TelegramChat.id")
+    
