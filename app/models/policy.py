@@ -5,6 +5,7 @@ from app.db.base import Base
 
 class Policy(Base):
     __tablename__ = "policy"
+    __table_args__ = {"schema": "core"} # <--- این خط باید اضافه شود
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True, nullable=False)
     fingerprint = Column(String(255), nullable=False, unique=True, index=True)

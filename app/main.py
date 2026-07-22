@@ -1,10 +1,7 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import policy
-from app.db.session import engine
-from app.db.base import Base
-
-# ساخت جداول دیتابیس (برای MVP فعلی. بعداً از Alembic استفاده می‌کنیم)
-Base.metadata.create_all(bind=engine)
+from app.api.routes import policy, assessment
 
 app = FastAPI(
     title="Intelligence & Governance Platform API",
@@ -12,5 +9,14 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# ثبت روترها
+# اضافه کردن تنظیمات CORS برای ارتباط با فرانت‌اند
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # در محیط پروداکشن باید آدرس دقیق فرانت‌اند جایگزین شود
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(policy.router)
+app.include_router(assessment.router) # اضافه شدن روتر ارزیابی
