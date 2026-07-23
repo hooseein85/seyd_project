@@ -16,3 +16,4 @@ class Policy(Base):
     default_recomned = Column(Text, nullable=True)
     keywords = Column(Text, nullable=True)
     prompt = Column(Text, nullable=True)
+    status = Column(String(50), nullable=True, default="active")

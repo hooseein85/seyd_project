@@ -10,6 +10,7 @@ class PolicyBase(BaseModel):
     default_recomned: Optional[str] = None
     keywords: Optional[str] = None
     prompt: Optional[str] = None
+    status: Optional[str] = None
 
 class PolicyCreate(PolicyBase):
     pass
