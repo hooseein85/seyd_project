@@ -6,6 +6,7 @@ from app.models.content import Content
 from pydantic import BaseModel
 from datetime import datetime
 from uuid import UUID
+from sqlalchemy import desc
 
 router = APIRouter(prefix="/api/v1/contents", tags=["Contents"])
 
@@ -41,10 +42,10 @@ class ContentResponse(BaseModel):
         from_attributes = True
 
 @router.get("/", response_model=List[ContentResponse])
-def get_contents(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    # جوین کردن همزمان چت و اکانت
+def get_contents(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
     contents = db.query(Content).options(
         joinedload(Content.telegram_chat),
         joinedload(Content.account)
-    ).offset(skip).limit(limit).all()
+    ).order_by(desc(Content.publish_time)).offset(skip).limit(limit).all()
+    
     return contents

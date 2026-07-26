@@ -5,6 +5,8 @@ from app.api.dependencies import get_db
 from app.models.violation import Violation
 from pydantic import BaseModel
 from uuid import UUID
+from sqlalchemy import desc
+
 
 router = APIRouter(prefix="/api/v1/violations", tags=["Violations"])
 
@@ -51,12 +53,14 @@ class ViolationResponse(BaseModel):
     class Config: from_attributes = True
 
 @router.get("/", response_model=List[ViolationResponse])
-def get_violations(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    # جوین چهارگانه برای تامین دیتای داشبورد
+def get_violations(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
+    # 🌟 استفاده از limit=50 و مرتب‌سازی نزولی
+    # اگر در جدول violation ستون created_at دارید، آن را جایگزین Violation.id کنید
     violations = db.query(Violation).options(
         joinedload(Violation.policy),
         joinedload(Violation.content),
         joinedload(Violation.account),
         joinedload(Violation.assessment)
-    ).offset(skip).limit(limit).all()
+    ).order_by(desc(Violation.created_at)).offset(skip).limit(limit).all()
+    
     return violations

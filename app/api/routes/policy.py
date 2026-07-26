@@ -4,6 +4,8 @@ from typing import List
 from app.api.dependencies import get_db
 from app.schemas.policy import PolicyCreate, PolicyResponse
 from app.services.policy_service import PolicyService
+from sqlalchemy import desc
+from app.models.policy import Policy
 
 router = APIRouter(prefix="/api/v1/policies", tags=["Policies"])
 policy_service = PolicyService()
@@ -19,6 +21,7 @@ def get_policy(policy_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Policy not found")
     return policy
 
-@router.post("/", response_model=PolicyResponse, status_code=status.HTTP_201_CREATED)
-def create_policy(policy: PolicyCreate, db: Session = Depends(get_db)):
-    return policy_service.create_policy(db, policy)
+@router.get("/", response_model=List[PolicyResponse])
+def get_policies(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
+    policies = db.query(Policy).order_by(desc(Policy.created_at)).offset(skip).limit(limit).all()
+    return policies

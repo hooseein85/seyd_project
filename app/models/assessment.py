@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Text, Numeric, ForeignKey
+from sqlalchemy import Column, String, Text, Numeric, ForeignKey, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.db.base import Base
@@ -30,3 +30,4 @@ class Assessment(Base):
     content_id = Column(UUID(as_uuid=True), ForeignKey("core.content.id"), nullable=True)
     policy = relationship("Policy", primaryjoin="Assessment.policy_id == Policy.id")
     content = relationship("Content", primaryjoin="Assessment.content_id == Content.id")
+    created_at = Column(DateTime, nullable=True)
