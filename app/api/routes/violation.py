@@ -6,6 +6,10 @@ from app.models.violation import Violation
 from pydantic import BaseModel
 from uuid import UUID
 from sqlalchemy import desc
+from fastapi.responses import StreamingResponse
+
+from app.schemas.violation_export import ViolationExportRequest
+from app.services.violation_export_service import ViolationExportService
 
 
 router = APIRouter(prefix="/api/v1/violations", tags=["Violations"])
@@ -65,3 +69,37 @@ def get_violations(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)
     ).order_by(desc(Violation.created_at)).offset(skip).limit(limit).all()
     
     return violations
+
+### Export to Excell 
+@router.post("/export")
+def export_violations(
+    request: ViolationExportRequest,
+    db: Session = Depends(get_db),
+):
+    service = ViolationExportService()
+
+    excel_file = service.export_to_excel(
+        db=db,
+        from_date=request.from_date,
+        to_date=request.to_date,
+        expert_action=request.expert_action,
+    )
+
+    filename = (
+        f"violations_"
+        f"{request.from_date}_"
+        f"{request.to_date}.xlsx"
+    )
+
+    return StreamingResponse(
+        excel_file,
+        media_type=(
+            "application/vnd.openxmlformats-"
+            "officedocument.spreadsheetml.sheet"
+        ),
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"'
+        },
+    )
+    
+    
