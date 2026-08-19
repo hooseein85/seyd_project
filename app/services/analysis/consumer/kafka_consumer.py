@@ -127,7 +127,6 @@ async def process_pipeline(payload: dict):
         assessment.history_score = 0.0
     
     assessment.reason = ai_result.get("reason")
-    assessment.previous_violations_count = 0
     
     raw_confidence = float(ai_result.get("confidence", 0.90))
     assessment.confidence_score = round(raw_confidence * 100, 2)
