@@ -29,7 +29,7 @@ class ViolationExportService:
 
         # فیلترهای اصلی
         filters = [
-            Violation.action_status == "confirmed",
+            Violation.action_status == "approved",
             Violation.created_at >= start_datetime,
             Violation.created_at < end_datetime,
         ]
