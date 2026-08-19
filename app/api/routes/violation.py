@@ -50,6 +50,7 @@ class VioAssessmentMin(BaseModel):
 class ViolationResponse(BaseModel):
     id: UUID
     expert_action: Optional[str] = None
+    expert_comment: Optional[str] = None
     action_status: Optional[str] = None
     policy: Optional[VioPolicyMin] = None
     content: Optional[VioContentMin] = None
@@ -101,5 +102,27 @@ def export_violations(
             "Content-Disposition": f'attachment; filename="{filename}"'
         },
     )
+# --- ساختار ورودی برای آپدیت تخلف ---
+class ViolationUpdateRequest(BaseModel):
+    expert_action: Optional[str] = None
+    expert_comment: Optional[str] = None
+    action_status: Optional[str] = None
+
+@router.patch("/{violation_id}", response_model=ViolationResponse)
+def update_violation(violation_id: UUID, req: ViolationUpdateRequest, db: Session = Depends(get_db)):
+    db_violation = db.query(Violation).filter(Violation.id == violation_id).first()
+    if not db_violation:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Violation not found")
     
+    if req.expert_action is not None:
+        db_violation.expert_action = req.expert_action
+    if req.expert_comment is not None:
+        db_violation.expert_comment = req.expert_comment
+    if req.action_status is not None:
+        db_violation.action_status = req.action_status
+        
+    db.commit()
+    db.refresh(db_violation)
+    return db_violation
     

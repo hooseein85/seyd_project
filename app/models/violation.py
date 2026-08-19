@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, ForeignKey, DateTime
+from sqlalchemy import Column, String, ForeignKey, DateTime, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.db.base import Base
@@ -21,7 +21,8 @@ class Violation(Base):
     person_id = Column(UUID(as_uuid=True), nullable=True)
     expert_id = Column(String(255), nullable=True)
     expert_action = Column(String(255), nullable=True)
-    action_status = Column(String(100), nullable=True)
+    expert_comment = Column(Text, nullable=True)
+    action_status = Column(String(100), nullable=True, default="pending")
     created_at = Column(DateTime, nullable=True)
 
     # تعریف روابط برای استفاده در JoinedLoad
