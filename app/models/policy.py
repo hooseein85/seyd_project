@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Text
+from sqlalchemy import Column, String, Integer, Boolean, Text
 from sqlalchemy.dialects.postgresql import UUID
 from app.db.base import Base
 
@@ -15,5 +15,7 @@ class Policy(Base):
     severity = Column(String(100), nullable=True)
     default_recomned = Column(Text, nullable=True)
     keywords = Column(Text, nullable=True)
-    prompt = Column(Text, nullable=True)
     status = Column(String(50), nullable=True, default="active")
+    description = Column(String, nullable=True)
+    prompt = Column(Text, nullable=True)
+    prompt_examples = Column(String, nullable=True) # مثال‌های Few-Shot

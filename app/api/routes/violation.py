@@ -39,6 +39,7 @@ class VioAssessmentMin(BaseModel):
     influence_score: Optional[float] = 0
     frequency_score: Optional[float] = 0
     confidence_score: Optional[float] = 0
+    previous_violations_count: Optional[int] = 0
     class Config: from_attributes = True
 
 # --- ساختار خروجی نهایی ---

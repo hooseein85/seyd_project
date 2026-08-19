@@ -35,12 +35,14 @@ class AssessmentBase(BaseModel):
     frequency_score: Optional[float] = None
     recommendation: Optional[str] = None
     content_id: Optional[UUID] = None
+    
 
 class AssessmentResponse(AssessmentBase):
     id: UUID
     policy: Optional[PolicyMinimal] = None # اضافه شدن فیلد قانون به خروجی
     content: Optional[ContentMinimal] = None # اضافه شدن محتوا
-
+    previous_violations_count: Optional[int] = None
+    
     class Config:
         from_attributes = True
 

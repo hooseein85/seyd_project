@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Text, Numeric, ForeignKey, DateTime
+from sqlalchemy import Column, String, Text, Numeric, ForeignKey, DateTime, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.db.base import Base
@@ -31,3 +31,5 @@ class Assessment(Base):
     policy = relationship("Policy", primaryjoin="Assessment.policy_id == Policy.id")
     content = relationship("Content", primaryjoin="Assessment.content_id == Content.id")
     created_at = Column(DateTime, nullable=True)
+    status = Column(String(50), nullable=True) 
+    previous_violations_count = Column(Integer, default=0)
