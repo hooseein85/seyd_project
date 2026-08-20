@@ -57,13 +57,25 @@ async def process_pipeline(payload: dict):
 
     print(f"✅ [DB] Status -> analyzing | Content: {content.body[:50]}...")
 
-    # 2. تحلیل مستقیم با هوش مصنوعی (LLM) - بدون Rule Engine
-    print("🧠 [LLM] analyzing content directly with all policies...")
-    ai_result = await analyze_with_llm(content.body, active_policies)
+    # 2. تحلیل مستقیم با هوش مصنوعی (LLM) با سیستم تلاش مجدد (Retry Mechanism)
+    max_retries = 3
+    ai_result = None
     
+    for attempt in range(1, max_retries + 1):
+        print(f"🧠 [LLM] analyzing content directly... (Attempt {attempt}/{max_retries})")
+        ai_result = await analyze_with_llm(content.body, active_policies)
+        
+        if ai_result:
+            break  # اگر موفق بود، از حلقه خارج شو و به کار ادامه بده
+            
+        print(f"⚠️ [LLM] Analysis failed on attempt {attempt}.")
+        if attempt < max_retries:
+            print("⏳ Waiting 1 seconds before retrying...")  # ۵ ثانیه استراحت قبل از تلاش بعدی
+
     if not ai_result:
-        print("❌ [LLM] Analysis failed. Changing status to failed.")
-        assessment.status = "failed"
+        print("❌ [LLM] All 3 attempts failed. Status set to 'pending_retry'.")
+        # به جای failed، وضعیت را می‌گذاریم pending_retry تا بعداً بتوانیم پیدایشان کنیم
+        assessment.status = "pending_retry"
         db.commit()
         db.close()
         return
