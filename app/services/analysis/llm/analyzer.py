@@ -16,92 +16,41 @@ async def init_llm_analyzer():
     await key_manager.setup_and_reset()
     print("🔑 [KEYS] API Key Manager Initialized.")
 
-async def analyze_with_llm(content_text: str, active_policies: list):
+async def analyze_with_llm(content_text: str, candidate_policies: list, all_active_policies: list):
     """
-    این تابع محتوای خام را مستقیماً می‌گیرد، پالیسی‌ها را از آبجکت‌های دیتابیس داینامیک می‌سازد،
-    پرامپت را می‌سازد و نتیجه را به فرمت JSON برمی‌گرداند.
+    پرامپت را از کل قوانین می‌خواند، اما به LLM فقط کاندیداها را پاس می‌دهد.
     """
-    
-    # 1. ساخت متون داینامیک برای پرامپت از 3 فیلد دیتابیس (code, title, prompt_description)
+    if not candidate_policies:
+        print("⚠️ [LLM] No candidate policies provided.")
+        return None
+
+    # 1. پیدا کردن پرامپت اختصاصی از بین قوانین کاندید شده
+    raw_prompt = None
+    for pol in candidate_policies:  # 🔴 باگ اینجا بود! قبلا all_active_policies بود
+        p_text = getattr(pol, 'prompt', None)
+        if p_text and len(p_text.strip()) > 10:
+            raw_prompt = p_text
+            break # پرامپت پیدا شد، از حلقه خارج شو
+            
+    if not raw_prompt:
+        print("❌ [ERROR] No system prompt found for the candidate policies! Check database.")
+        return None
+
+    # 2. ساخت متون داینامیک فقط برای قوانین کاندید شده (کاهش توکن)
     policies_text = ""
-    for pol in active_policies:
-        # چون active_policies آبجکت‌های SQLAlchemy هستند، از getattr استفاده می‌کنیم
+    for pol in candidate_policies:
         code = getattr(pol, 'code', '000')
         title = getattr(pol, 'title', 'Unknown')
-        # اگر prompt_description خالی بود، از description استفاده کند
         prompt_desc = getattr(pol, 'prompt_description', getattr(pol, 'description', 'بدون توضیحات'))
-        
         policies_text += f"- Code-{code}: {title} ({prompt_desc})\n"
 
-    # اضافه کردن قانون پیش‌فرض برای حالت سالم
     policies_text += "- Code-000: فاقد تطابق (محتوای سالم یا نامرتبط)\n"
 
-    # 2. پرامپت اصلی با تزریق داینامیک قوانین (توجه: آکولادهای JSON دوبرابر شده‌اند تا f-string پایتون ارور ندهد)
-    system_prompt = f"""<ROLE>
-You are an Enterprise Content Safety Classifier. Your mission is to evaluate input text against active security policies using strict binary decision boundaries. Flag ONLY severe, acute violations (Threshold = High). Output ONLY a valid single-line JSON.
-</ROLE>
+    # 3. تزریق قوانین به پرامپت دیتابیس و اصلاح آکولادها
+    system_prompt = raw_prompt.replace("{policies_text}", policies_text)
+    system_prompt = system_prompt.replace("{{", "{").replace("}}", "}")
 
-<SAFETY_TAXONOMY>
-[Active Policies from Database]:
-{policies_text}
-
-[Target Entities (Red Line)]:
-["موشعلی", "موشتبا", "عرزشی", "ارزشی", "بسیجی", "آخوند", "سپاه"] (including death metaphors like "کتلت").
-</SAFETY_TAXONOMY>
-
-<DECISION_BOUNDARIES>
-[VIOLATION CRITERIA (Label: "violation") -> ALL conditions must be True (AND Logic)]:
-1. Active Policy Match: The behavior matches a policy explicitly defined in <SAFETY_TAXONOMY>. If no active policy code matches, output "clean" with policy_code: null.
-2. Target Intersection: The message directly attacks, threatens, or dehumanizes entities in [Target Entities].
-3. Direct Stance: The author is PROMOTING, INCITING, or DIRECTLY EXECUTING severe masked/explicit profanity (e.g., "خار...صه", "ک.کش") or direct violent harm.
-
-[CLEAN CRITERIA (Label: "clean") -> ANY of these conditions makes the result Clean]:
-1. Inactive Policy: The behavior is offensive, but no active policy code exists in <SAFETY_TAXONOMY>.
-2. Stance - Reporting/Quoting: Author is quoting news, analyzing, or condemning someone else's violation without endorsing it.
-3. Stance - Harmless Banter: Everyday sarcasm, political satire, general complaints, or jokes without acute profanity.
-4. Non-Target Conflict: Severe swearing or mutual fighting between ordinary citizens without targeting [Target Entities].
-</DECISION_BOUNDARIES>
-
-<NORMALIZATION_RULES>
-Before classification, decode character extensions (e.g., "خاااار"), internal punctuation/spaces (e.g., "ب.شرف", "ک...ص"), and Persian/Arabic character variations.
-</NORMALIZATION_RULES>
-
-<CONFIDENCE_CALIBRATION>
-Calculate the `confidence` score strictly based on evidence clarity:
-- 0.90 - 1.00: EXPLICIT & UNAMBIGUOUS. Direct, raw words without masking or ambiguity.
-- 0.75 - 0.89: OBFUSCATED / CONTEXTUAL. Masked slurs (dots, spaces, leetspeak) or slang requiring contextual decoding.
-- 0.50 - 0.74: BORDERLINE / AMBIGUOUS. Sarcastic tone, unclear targets, or debatable intent.
-- NEVER default all classifications to 0.95+. Calibrate accurately.
-</CONFIDENCE_CALIBRATION>
-
-<OUTPUT_SCHEMA>
-{{
-  "classification": "violation" | "clean",
-  "policy_code": "CODE_STRING" | null,
-  "reason": "دلیل بسیار کوتاه در حداکثر 15 کلمه به فارسی",
-  "confidence": 0.0-1.0,
-  "evidence": ["exact_violating_substrings"]
-}}
-</OUTPUT_SCHEMA>
-
-<FEW_SHOT_BENCHMARKS>
-Input: "این عرزشی‌های خارکصده رو باید به رگبار بست"
-Output: {{"classification":"violation","policy_code":"105","reason":"فحاشی کاملاً صریح و تهدید مستقیم جانی","confidence":0.98,"evidence":["عرزشی‌های خارکصده","به رگبار بست"]}}
-
-Input: "همین م.وش.ع.لی اگه زنده بود الان وضع این نبود"
-Output: {{"classification":"violation","policy_code":"105","reason":"استفاده از لقب توهین‌آمیز با استتار نقطه‌ای","confidence":0.82,"evidence":["م.وش.ع.لی"]}}
-
-Input: "عرزشی جان یکم کمتر ساندیس بزن برات خوب نیست"
-Output: {{"classification":"clean","policy_code":null,"reason":"طعنه و کنایه سیاسی بدون رکاکت یا تهدید حاد","confidence":0.65,"evidence":[]}}
-
-Input: "مرتیکه دزد بی شرف کیفمو زد"
-Output: {{"classification":"clean","policy_code":null,"reason":"نزاع شخصی فاقد هدف حاکمیتی","confidence":0.95,"evidence":[]}}
-
-Input: "خبرگزاری تسنیم نوشته فردی به مقدسات توهین کرده است"
-Output: {{"classification":"clean","policy_code":null,"reason":"نقل‌قول و گزارشگری رسمی فاقد نیت هتاکی","confidence":0.99,"evidence":[]}}
-</FEW_SHOT_BENCHMARKS>"""
-
-    # دریافت کلید آزاد از منیجر
+    # بقیه کدهای اتصال به Groq کاملاً مثل قبل است...
     current_ai_key = await key_manager.get_free_key()
     if not current_ai_key:
         print("😴 [API KEYS] Exhausted. Cannot analyze at the moment.")
@@ -121,11 +70,8 @@ Output: {{"classification":"clean","policy_code":null,"reason":"نقل‌قول 
             response_format={"type": "json_object"} 
         )
         
-        # آزادسازی کلید پس از موفقیت
         await key_manager.release_key(current_ai_key['id'])
-        
         raw_output = response.choices[0].message.content
-        
         return json.loads(raw_output)
             
     except Exception as e: 
@@ -135,5 +81,4 @@ Output: {{"classification":"clean","policy_code":null,"reason":"نقل‌قول 
         else:
             await key_manager.release_key(current_ai_key['id'])
             print(f"❌ [GROQ ERROR] {error_msg}")
-        
         return None

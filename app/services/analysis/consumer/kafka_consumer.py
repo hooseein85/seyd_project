@@ -29,7 +29,11 @@ async def process_pipeline(payload: dict):
     assessment_id = payload.get("assessment_id")
     content_id = payload.get("content_id")
     
-    # 1. عملیات همگام دیتابیس (گرفتن دیتا)
+    # 1. گرفتن کلمات کلیدی از کافکا و پاکسازی فاصله‌های اضافه (Strip)
+    matched_keywords_raw = payload.get("matched_keywords", [])
+    matched_keywords = [kw.strip().lower() for kw in matched_keywords_raw if kw and kw.strip()]
+    
+    # 2. عملیات همگام دیتابیس (گرفتن دیتا)
     def fetch_data():
         db: Session = SessionLocal()
         try:
@@ -57,24 +61,50 @@ async def process_pipeline(payload: dict):
 
     print(f"✅ [DB] Status -> analyzing | Content: {content.body[:50]}...")
 
-    # 2. تحلیل مستقیم با هوش مصنوعی (LLM) با سیستم تلاش مجدد (Retry Mechanism)
+    # ---------------------------------------------------------
+    # 3. فاز جدید: فیلتر کردن کاندیداها (Candidate Selection)
+    # ---------------------------------------------------------
+    print(f"🔑 [INPUT] Keywords from Kafka: {matched_keywords}")
+    
+    candidate_policies = []
+    for pol in active_policies:
+        pol_keywords_raw = getattr(pol, 'keywords', '') or ''
+        # استخراج و پاکسازی کلمات کلیدیِ این قانون از دیتابیس
+        pol_keywords = [k.strip().lower() for k in pol_keywords_raw.split(',') if k.strip()]
+        
+        # اگر اشتراکی بین کلمات کافکا و کلمات این قانون وجود داشت، کاندید می‌شود
+        if set(matched_keywords).intersection(set(pol_keywords)):
+            candidate_policies.append(pol)
+    
+    # لاگ کردن نتیجه کاندیداها برای بررسی در ترمینال
+    if not candidate_policies:
+        print(f"⚠️ [FILTER] No candidate policies matched. Falling back to ALL active policies.")
+        candidate_policies = active_policies
+    else:
+        print("🎯 [FILTER] Matched Candidate Policies:")
+        for p in candidate_policies:
+            print(f"    - Code: {getattr(p, 'code', 'N/A')} | Title: {getattr(p, 'title', 'Unknown')}")
+    # ---------------------------------------------------------
+
+    # 4. تحلیل مستقیم با هوش مصنوعی (LLM) با سیستم تلاش مجدد
     max_retries = 3
     ai_result = None
     
     for attempt in range(1, max_retries + 1):
         print(f"🧠 [LLM] analyzing content directly... (Attempt {attempt}/{max_retries})")
-        ai_result = await analyze_with_llm(content.body, active_policies)
+        
+        # ارسال کاندیداها به جای کل قوانین
+        ai_result = await analyze_with_llm(content.body, candidate_policies, active_policies)
         
         if ai_result:
-            break  # اگر موفق بود، از حلقه خارج شو و به کار ادامه بده
+            break
             
         print(f"⚠️ [LLM] Analysis failed on attempt {attempt}.")
         if attempt < max_retries:
-            print("⏳ Waiting 1 seconds before retrying...")  # ۵ ثانیه استراحت قبل از تلاش بعدی
+            print("⏳ Waiting 1 seconds before retrying...")
 
     if not ai_result:
         print("❌ [LLM] All 3 attempts failed. Status set to 'pending_retry'.")
-        # به جای failed، وضعیت را می‌گذاریم pending_retry تا بعداً بتوانیم پیدایشان کنیم
         assessment.status = "pending_retry"
         db.commit()
         db.close()
@@ -82,7 +112,7 @@ async def process_pipeline(payload: dict):
         
     print(f"🎯 [RESULT] Classification: {ai_result.get('classification')} | Reason: {ai_result.get('reason')}")
 
-   # 3. محاسبه ریسک، اولویت و ذخیره نتیجه نهایی در دیتابیس
+    # 5. محاسبه ریسک، اولویت و ذخیره نتیجه نهایی در دیتابیس
     if ai_result.get("classification") == "violation":
         assessment.status = "violation_detected"
         
@@ -91,13 +121,14 @@ async def process_pipeline(payload: dict):
         
         violated_policy = None
         if clean_policy_code and clean_policy_code.lower() != "null":
+            # جستجو در کل active_policies برای اطمینان از ذخیره دیتای صحیح
             violated_policy = next((p for p in active_policies if str(p.code) == clean_policy_code), None)
             
             if violated_policy:
                 assessment.policy_id = violated_policy.id
                 assessment.category = violated_policy.title
         
-        # --- محاسبات ریسک و اولویت فاز MVP ---
+        # --- محاسبات ریسک و اولویت ---
         severity_str = getattr(violated_policy, 'severity', 'low') if violated_policy else 'low'
         severity_weight = get_severity_weight(severity_str)
         
@@ -115,7 +146,6 @@ async def process_pipeline(payload: dict):
         assessment.risk = risk_score
         assessment.priority_score = priority_score
         assessment.history_score = account_history_score
-
         assessment.previous_violations_count = prev_violations_count
 
         raw_fingerprint_data = f"{content.id}-{violated_policy.id if violated_policy else 'unknown'}"
@@ -146,6 +176,7 @@ async def process_pipeline(payload: dict):
         
     db.commit()
     print(f"💾 [DB] Status: {assessment.status} | Risk: {getattr(assessment, 'risk', 0)} | Priority: {getattr(assessment, 'priority_score', 0)}")
+    print("-" * 60)
     db.close()
 
 async def consume_assessments():
