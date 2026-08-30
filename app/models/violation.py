@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, ForeignKey, DateTime, Text
+from sqlalchemy import Column, String, Text, Numeric, ForeignKey, DateTime, Integer, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.db.base import Base
@@ -24,6 +24,7 @@ class Violation(Base):
     expert_comment = Column(Text, nullable=True)
     action_status = Column(String(100), nullable=True, default="pending")
     created_at = Column(DateTime, nullable=True)
+    matchedRules = Column(JSON, default=list)
 
     # تعریف روابط برای استفاده در JoinedLoad
     content = relationship("Content", primaryjoin="Violation.content_id == Content.id")

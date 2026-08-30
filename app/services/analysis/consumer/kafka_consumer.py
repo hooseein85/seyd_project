@@ -159,8 +159,11 @@ async def process_pipeline(payload: dict):
             policy_id=assessment.policy_id,
             fingerprint=violation_fingerprint,
             created_at=assessment.created_at,
+            matchedRules=ai_result.get("matchedRules", [])
         )
         db.add(new_violation)
+
+        assessment.matchedRules = ai_result.get("matchedRules", [])
         
     else:
         assessment.status = "clean"

@@ -1,13 +1,13 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends
+from uuid import UUID
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import desc
+from pydantic import BaseModel
+
 from app.api.dependencies import get_db
 from app.models.violation import Violation
-from pydantic import BaseModel
-from uuid import UUID
-from sqlalchemy import desc
-from fastapi.responses import StreamingResponse
-
 from app.schemas.violation_export import ViolationExportRequest
 from app.services.violation_export_service import ViolationExportService
 
@@ -46,6 +46,12 @@ class VioAssessmentMin(BaseModel):
     previous_violations_count: Optional[int] = 0
     class Config: from_attributes = True
 
+# --- ساختار جدید برای آیتم‌های آرایه قوانین مچ شده ---
+class VioMatchedRuleMin(BaseModel):
+    code: str
+    title: str
+    class Config: from_attributes = True
+
 # --- ساختار خروجی نهایی ---
 class ViolationResponse(BaseModel):
     id: UUID
@@ -56,12 +62,15 @@ class ViolationResponse(BaseModel):
     content: Optional[VioContentMin] = None
     account: Optional[VioAccountMin] = None
     assessment: Optional[VioAssessmentMin] = None
+    
+    # آرایه داینامیک برای نمایش چند تخلف هم‌زمان در فرانت‌اند
+    matchedRules: Optional[List[VioMatchedRuleMin]] = [] 
+    
     class Config: from_attributes = True
 
 @router.get("/", response_model=List[ViolationResponse])
 def get_violations(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
-    # 🌟 استفاده از limit=50 و مرتب‌سازی نزولی
-    # اگر در جدول violation ستون created_at دارید، آن را جایگزین Violation.id کنید
+    # استفاده از limit=50 و مرتب‌سازی نزولی
     violations = db.query(Violation).options(
         joinedload(Violation.policy),
         joinedload(Violation.content),
@@ -102,6 +111,7 @@ def export_violations(
             "Content-Disposition": f'attachment; filename="{filename}"'
         },
     )
+
 # --- ساختار ورودی برای آپدیت تخلف ---
 class ViolationUpdateRequest(BaseModel):
     expert_action: Optional[str] = None
@@ -112,7 +122,6 @@ class ViolationUpdateRequest(BaseModel):
 def update_violation(violation_id: UUID, req: ViolationUpdateRequest, db: Session = Depends(get_db)):
     db_violation = db.query(Violation).filter(Violation.id == violation_id).first()
     if not db_violation:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Violation not found")
     
     if req.expert_action is not None:
@@ -125,4 +134,3 @@ def update_violation(violation_id: UUID, req: ViolationUpdateRequest, db: Sessio
     db.commit()
     db.refresh(db_violation)
     return db_violation
-    

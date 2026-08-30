@@ -1,0 +1,140 @@
+.
+├── api_keys_manager.db
+├── app
+│   ├── api
+│   │   ├── dependencies.py
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── dependencies.cpython-312.pyc
+│   │   │   └── __init__.cpython-312.pyc
+│   │   └── routes
+│   │       ├── assessment.py
+│   │       ├── auth.py
+│   │       ├── content.py
+│   │       ├── dashboard.py
+│   │       ├── __init__.py
+│   │       ├── policy.py
+│   │       ├── __pycache__
+│   │       │   ├── assessment.cpython-312.pyc
+│   │       │   ├── auth.cpython-312.pyc
+│   │       │   ├── content.cpython-312.pyc
+│   │       │   ├── dashboard.cpython-312.pyc
+│   │       │   ├── __init__.cpython-312.pyc
+│   │       │   ├── policy.cpython-312.pyc
+│   │       │   └── violation.cpython-312.pyc
+│   │       └── violation.py
+│   ├── core
+│   │   ├── config.py
+│   │   ├── exceptions.py
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── config.cpython-312.pyc
+│   │   │   ├── __init__.cpython-312.pyc
+│   │   │   └── security.cpython-312.pyc
+│   │   └── security.py
+│   ├── db
+│   │   ├── base.py
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── base.cpython-312.pyc
+│   │   │   ├── __init__.cpython-312.pyc
+│   │   │   └── session.cpython-312.pyc
+│   │   └── session.py
+│   ├── main.py
+│   ├── models
+│   │   ├── account.py
+│   │   ├── assessment.py
+│   │   ├── base_model.py
+│   │   ├── content.py
+│   │   ├── __init__.py
+│   │   ├── policy.py
+│   │   ├── __pycache__
+│   │   │   ├── account.cpython-312.pyc
+│   │   │   ├── assessment.cpython-312.pyc
+│   │   │   ├── content.cpython-312.pyc
+│   │   │   ├── __init__.cpython-312.pyc
+│   │   │   ├── policy.cpython-312.pyc
+│   │   │   ├── telegram_chat.cpython-312.pyc
+│   │   │   ├── user.cpython-312.pyc
+│   │   │   └── violation.cpython-312.pyc
+│   │   ├── telegram_chat.py
+│   │   ├── user.py
+│   │   └── violation.py
+│   ├── __pycache__
+│   │   └── main.cpython-312.pyc
+│   ├── repositories
+│   │   ├── __init__.py
+│   │   ├── policy_repo.py
+│   │   └── __pycache__
+│   │       ├── __init__.cpython-312.pyc
+│   │       └── policy_repo.cpython-312.pyc
+│   ├── schemas
+│   │   ├── assessment.py
+│   │   ├── __init__.py
+│   │   ├── policy.py
+│   │   ├── __pycache__
+│   │   │   ├── assessment.cpython-312.pyc
+│   │   │   ├── __init__.cpython-312.pyc
+│   │   │   ├── policy.cpython-312.pyc
+│   │   │   ├── user.cpython-312.pyc
+│   │   │   └── violation_export.cpython-312.pyc
+│   │   ├── user.py
+│   │   └── violation_export.py
+│   └── services
+│       ├── analysis
+│       │   ├── consumer
+│       │   │   ├── __init__.py
+│       │   │   ├── kafka_consumer.py
+│       │   │   └── __pycache__
+│       │   │       ├── __init__.cpython-312.pyc
+│       │   │       └── kafka_consumer.cpython-312.pyc
+│       │   ├── decision
+│       │   │   └── __init__.py
+│       │   ├── __init__.py
+│       │   ├── llm
+│       │   │   ├── analyzer.py
+│       │   │   ├── analyze_usage.py
+│       │   │   ├── api_key_manager.py
+│       │   │   ├── api_keys_manager.db
+│       │   │   ├── __init__.py
+│       │   │   ├── list_models.py
+│       │   │   └── __pycache__
+│       │   │       ├── analyzer.cpython-312.pyc
+│       │   │       ├── api_key_manager.cpython-312.pyc
+│       │   │       └── __init__.cpython-312.pyc
+│       │   ├── priority
+│       │   │   ├── engine.py
+│       │   │   ├── __init__.py
+│       │   │   └── __pycache__
+│       │   │       ├── engine.cpython-312.pyc
+│       │   │       └── __init__.cpython-312.pyc
+│       │   ├── __pycache__
+│       │   │   └── __init__.cpython-312.pyc
+│       │   ├── risk
+│       │   │   ├── engine.py
+│       │   │   ├── __init__.py
+│       │   │   └── __pycache__
+│       │   │       ├── engine.cpython-312.pyc
+│       │   │       └── __init__.cpython-312.pyc
+│       │   ├── rule_engine
+│       │   │   ├── engine.py
+│       │   │   ├── __init__.py
+│       │   │   └── __pycache__
+│       │   │       ├── engine.cpython-312.pyc
+│       │   │       └── __init__.cpython-312.pyc
+│       │   └── worker
+│       │       └── __init__.py
+│       ├── __init__.py
+│       ├── policy_service.py
+│       ├── __pycache__
+│       │   ├── __init__.cpython-312.pyc
+│       │   ├── policy_service.cpython-312.pyc
+│       │   └── violation_export_service.cpython-312.pyc
+│       └── violation_export_service.py
+├── .env
+├── .gitignore
+├── README.md
+├── requirements.txt
+└── token_usage_logs.csv
+
+33 directories, 105 files

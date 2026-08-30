@@ -1,8 +1,7 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
 
-# ساختار کوچک برای دیتای Join شده‌ی قانون
 class PolicyMinimal(BaseModel):
     code: Optional[str] = None
     title: Optional[str] = None
@@ -14,6 +13,14 @@ class ContentMinimal(BaseModel):
     content_id: Optional[str] = None
     body: Optional[str] = None
     platform: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+# 👈 این کلاس حتماً باید قبل از AssessmentResponse اینجا تعریف شود
+class MatchedRuleSchema(BaseModel):
+    code: str
+    title: str
 
     class Config:
         from_attributes = True
@@ -35,14 +42,15 @@ class AssessmentBase(BaseModel):
     frequency_score: Optional[float] = None
     recommendation: Optional[str] = None
     content_id: Optional[UUID] = None
-    
 
 class AssessmentResponse(AssessmentBase):
     id: UUID
-    policy: Optional[PolicyMinimal] = None # اضافه شدن فیلد قانون به خروجی
-    content: Optional[ContentMinimal] = None # اضافه شدن محتوا
+    policy: Optional[PolicyMinimal] = None 
+    content: Optional[ContentMinimal] = None 
     previous_violations_count: Optional[int] = None
+    
+    # حالا اینجا بدون ارور شناخته می‌شود
+    matchedRules: List[MatchedRuleSchema] = []
     
     class Config:
         from_attributes = True
-

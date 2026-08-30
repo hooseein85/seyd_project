@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Text, Numeric, ForeignKey, DateTime, Integer
+from sqlalchemy import Column, String, Text, Numeric, ForeignKey, DateTime, Integer, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.db.base import Base
@@ -33,3 +33,4 @@ class Assessment(Base):
     created_at = Column(DateTime, nullable=True)
     status = Column(String(50), nullable=True) 
     previous_violations_count = Column(Integer, default=0)
+    matchedRules = Column(JSON, default=list)
