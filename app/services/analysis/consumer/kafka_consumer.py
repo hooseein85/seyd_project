@@ -151,17 +151,25 @@ async def process_pipeline(payload: dict):
         raw_fingerprint_data = f"{content.id}-{violated_policy.id if violated_policy else 'unknown'}"
         violation_fingerprint = hashlib.md5(raw_fingerprint_data.encode()).hexdigest()
 
-        # ساخت رکورد تخلف (Violation)
-        new_violation = Violation(
-            assessment_id=assessment.id,
-            content_id=content.id,
-            account_id=content.account_id,
-            policy_id=assessment.policy_id,
-            fingerprint=violation_fingerprint,
-            created_at=assessment.created_at,
-            matchedRules=ai_result.get("matchedRules", [])
-        )
-        db.add(new_violation)
+        # بررسی وجود تخلف قبلی برای جلوگیری از خطای UniqueViolation
+        existing_violation = db.query(Violation).filter(Violation.fingerprint == violation_fingerprint).first()
+        
+        if existing_violation:
+            # در صورت وجود، فقط آرایه قوانین و ارزیابی را به‌روزرسانی کن
+            existing_violation.matchedRules = ai_result.get("matchedRules", [])
+            existing_violation.assessment_id = assessment.id
+        else:
+            # ساخت رکورد جدید تخلف در صورت نبودن در دیتابیس
+            new_violation = Violation(
+                assessment_id=assessment.id,
+                content_id=content.id,
+                account_id=content.account_id,
+                policy_id=assessment.policy_id,
+                fingerprint=violation_fingerprint,
+                created_at=assessment.created_at,
+                matchedRules=ai_result.get("matchedRules", [])
+            )
+            db.add(new_violation)
 
         assessment.matchedRules = ai_result.get("matchedRules", [])
         
