@@ -5,7 +5,7 @@ from app.db.base import Base
 
 class Policy(Base):
     __tablename__ = "policy"
-    __table_args__ = {"schema": "core"} # <--- این خط باید اضافه شود
+    __table_args__ = {"schema": "core"}
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True, nullable=False)
     fingerprint = Column(String(255), nullable=False, unique=True, index=True)
@@ -13,6 +13,7 @@ class Policy(Base):
     code = Column(String(255), nullable=True, index=True)
     title = Column(String(255), nullable=True)
     severity = Column(String(100), nullable=True)
+    weight = Column(Integer, nullable=True, default=50)
     default_recomned = Column(Text, nullable=True)
     keywords = Column(Text, nullable=True)
     status = Column(String(50), nullable=True, default="active")

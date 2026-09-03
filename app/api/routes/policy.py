@@ -32,6 +32,7 @@ def get_policies(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
 class PolicyUpdateRequest(BaseModel):
     title: Optional[str] = None
     severity: Optional[str] = None
+    weight: Optional[int] = None
     default_recomned: Optional[str] = None
     keywords: Optional[str] = None
     prompt: Optional[str] = None

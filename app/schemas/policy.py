@@ -7,10 +7,12 @@ class PolicyBase(BaseModel):
     code: Optional[str] = None
     title: Optional[str] = None
     severity: Optional[str] = None
+    weight: Optional[int] = 50
     default_recomned: Optional[str] = None
     keywords: Optional[str] = None
     prompt: Optional[str] = None
     status: Optional[str] = None
+    
 
 class PolicyCreate(PolicyBase):
     pass

@@ -16,7 +16,7 @@ from app.models.violation import Violation
 # ایمپورت هوش مصنوعی
 from app.services.analysis.llm.analyzer import analyze_with_llm, init_llm_analyzer
 # ایمپورت موتورهای ریسک و اولویت
-from app.services.analysis.risk.engine import get_severity_weight, calculate_risk_score
+from app.services.analysis.risk.engine import calculate_risk_score, get_policy_weight
 from app.services.analysis.priority.engine import calculate_account_history_score, calculate_priority_score
 
 KAFKA_TOPIC = "assessment-created"
@@ -129,19 +129,18 @@ async def process_pipeline(payload: dict):
                 assessment.category = violated_policy.title
         
         # --- محاسبات ریسک و اولویت ---
-        severity_str = getattr(violated_policy, 'severity', 'low') if violated_policy else 'low'
-        severity_weight = get_severity_weight(severity_str)
+        #severity_str = getattr(violated_policy, 'severity', 'low') if violated_policy else 'low'
+        policy_weight = get_policy_weight(violated_policy)
         
         confidence = float(ai_result.get("confidence", 0.90))
-        risk_score = calculate_risk_score(severity_weight, confidence)
+        risk_score = calculate_risk_score(policy_weight, confidence)
         
         # محاسبه سابقه تخلفات اکانت از دیتابیس
         prev_violations_count = db.query(Violation).filter(Violation.account_id == content.account_id).count()
         account_history_score = calculate_account_history_score(prev_violations_count)
         
         # محاسبه اولویت نهایی
-        priority_score = calculate_priority_score(severity_weight, account_history_score, risk_score)
-        
+        priority_score = calculate_priority_score(policy_weight, account_history_score, risk_score)        
         # ذخیره امتیازات در ارزیابی
         assessment.risk = risk_score
         assessment.priority_score = priority_score
