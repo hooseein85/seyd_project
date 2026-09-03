@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Integer, Boolean, Text
+from sqlalchemy import Column, String, Integer, Boolean, Text, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from app.db.base import Base
 
@@ -15,6 +15,7 @@ class Policy(Base):
     severity = Column(String(100), nullable=True)
     weight = Column(Integer, nullable=True, default=50)
     default_recomned = Column(Text, nullable=True)
+    tiered_actions = Column(JSON, nullable=True, default=dict)
     keywords = Column(Text, nullable=True)
     status = Column(String(50), nullable=True, default="active")
     description = Column(String, nullable=True)

@@ -1,13 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
+from typing import Optional, List, Dict
 from app.api.dependencies import get_db
 from app.schemas.policy import PolicyCreate, PolicyResponse
 from app.services.policy_service import PolicyService
 from sqlalchemy import desc
 from app.models.policy import Policy
 from pydantic import BaseModel
-from typing import Optional
 from uuid import UUID
 
 router = APIRouter(prefix="/api/v1/policies", tags=["Policies"])
@@ -34,6 +33,7 @@ class PolicyUpdateRequest(BaseModel):
     severity: Optional[str] = None
     weight: Optional[int] = None
     default_recomned: Optional[str] = None
+    tiered_actions: Optional[Dict[str, str]] = None
     keywords: Optional[str] = None
     prompt: Optional[str] = None
     status: Optional[str] = None

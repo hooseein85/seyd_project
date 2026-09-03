@@ -1,5 +1,11 @@
 from pydantic import BaseModel, UUID4, ConfigDict
-from typing import Optional
+from typing import Optional, Dict, Any
+
+class TieredActionsSchema(BaseModel):
+    first: Optional[str] = "sms"
+    second: Optional[str] = "sms"
+    third: Optional[str] = "block"
+    exceeded: Optional[str] = "confront"
 
 class PolicyBase(BaseModel):
     fingerprint: str
@@ -9,6 +15,7 @@ class PolicyBase(BaseModel):
     severity: Optional[str] = None
     weight: Optional[int] = 50
     default_recomned: Optional[str] = None
+    tiered_actions: Optional[Dict[str, Any]] = None
     keywords: Optional[str] = None
     prompt: Optional[str] = None
     status: Optional[str] = None
